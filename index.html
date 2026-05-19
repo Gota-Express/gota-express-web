@@ -52,6 +52,7 @@
             box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); transition: all 0.2s;
         }
         .btn-principal:active { transform: scale(0.98); }
+        .btn-principal:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
         
         .header-tarjeta {
             display: flex; flex-direction: column; align-items: center;
@@ -127,8 +128,15 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; 
         }
         .btn-accion:active { transform: scale(0.98); }
+        .btn-accion:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+        
         .btn-sumar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn-canjear { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; animation: pulsoAmarillo 1.2s infinite; }
+        
+        .mensaje-exito {
+            background: #d1fae5; color: #047857; padding: 12px; border-radius: 12px;
+            font-weight: 600; font-size: 14px; border: 1px solid #34d399; animation: fadeIn 0.5s ease;
+        }
 
         .btn-gerente { 
             background: transparent; color: #cbd5e1; border: none; margin-top: 25px; 
@@ -151,7 +159,7 @@
 
         <div class="seccion-busqueda" id="vistaBusqueda">
             <input type="tel" id="inputTelefono" placeholder="Teléfono del cliente (10 dígitos)" maxlength="10">
-            <button class="btn-principal" onclick="buscarOAgregarCliente()">Buscar Tarjeta</button>
+            <button class="btn-principal" id="btnBuscar" onclick="buscarOAgregarCliente()">Buscar Tarjeta</button>
         </div>
 
         <div class="tarjeta-puntos" id="tarjetaPuntos">
@@ -193,6 +201,7 @@
         let clienteActualId = null;
         let visitasActuales = 0;
         let diasRestantes = 90;
+        let visitaRegistradaEnEstaSesion = false; // Candado para evitar clics múltiples
         const LIMITE_DIAS = 90;
 
         const logoGotaExpressSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#0072ff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
@@ -202,40 +211,53 @@
             const telefono = document.getElementById('inputTelefono').value.trim();
             if (telefono.length < 10) { alert("Ingresa un número de 10 dígitos."); return; }
 
+            // Bloquear botón mientras busca
+            document.getElementById('btnBuscar').disabled = true;
+            document.getElementById('btnBuscar').innerText = "Buscando...";
+
             clienteActualId = telefono;
-            const docRef = db.collection("clientesFidelidad").doc(telefono);
-            const doc = await docRef.get();
+            visitaRegistradaEnEstaSesion = false; // Reseteamos el candado al buscar a alguien
+            
+            try {
+                const docRef = db.collection("clientesFidelidad").doc(telefono);
+                const doc = await docRef.get();
 
-            if (doc.exists) {
-                const data = doc.data();
-                const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
-                const hoy = new Date();
-                const milisegundosTranscurridos = hoy - fechaInicio;
-                const diasTranscurridos = Math.floor(milisegundosTranscurridos / (1000 * 60 * 60 * 24));
-                
-                diasRestantes = LIMITE_DIAS - diasTranscurridos;
+                if (doc.exists) {
+                    const data = doc.data();
+                    const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
+                    const hoy = new Date();
+                    const diasTranscurridos = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
+                    
+                    diasRestantes = LIMITE_DIAS - diasTranscurridos;
 
-                if (diasRestantes < 0 && data.visitas < 7) {
-                    alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
-                    visitasActuales = 1;
-                    diasRestantes = 90;
-                    await docRef.update({ visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                    if (diasRestantes < 0 && data.visitas < 7) {
+                        alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
+                        visitasActuales = 1;
+                        diasRestantes = 90;
+                        await docRef.update({ visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                    } else {
+                        visitasActuales = data.visitas;
+                    }
                 } else {
-                    visitasActuales = data.visitas;
+                    visitasActuales = 1; 
+                    diasRestantes = 90;
+                    await docRef.set({ telefono: telefono, visitas: visitasActuales, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                    alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
+                    visitaRegistradaEnEstaSesion = true; // Si es nuevo, ya le dimos su primera visita hoy
                 }
-            } else {
-                visitasActuales = 1; 
-                diasRestantes = 90;
-                await docRef.set({ telefono: telefono, visitas: visitasActuales, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
-                alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
-            }
 
-            document.getElementById('vistaBusqueda').style.display = 'none';
-            dibujarTarjeta();
+                document.getElementById('vistaBusqueda').style.display = 'none';
+                dibujarTarjeta();
+            } catch (error) {
+                console.error(error);
+                alert("Error al conectar con la base de datos.");
+            } finally {
+                document.getElementById('btnBuscar').disabled = false;
+                document.getElementById('btnBuscar').innerText = "Buscar Tarjeta";
+            }
         }
 
         function dibujarTarjeta() {
-            // Aquí agregamos "Tarjeta No." al número del cliente
             document.getElementById('textoCliente').innerText = `Tarjeta No. ${clienteActualId}`;
             const textoVigencia = document.getElementById('textoVigencia');
             
@@ -275,40 +297,73 @@
                 grid.appendChild(div);
             }
 
-            if (visitasActuales < 7) {
-                zonaControles.innerHTML = `<button class="btn-accion btn-sumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
+            // Lógica de los botones con el candado
+            if (visitasActuales >= 7) {
+                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" id="btnCanjear" onclick="canjearPremio()">🎁 Canjear y Reiniciar Tarjeta</button>`;
+            } else if (visitaRegistradaEnEstaSesion) {
+                // Si ya se registró una visita hoy, mostramos el mensaje de éxito y quitamos el botón temporalmente
+                zonaControles.innerHTML = `<div class="mensaje-exito">✅ Lavada registrada correctamente.</div>`;
             } else {
-                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" onclick="canjearPremio()">🎁 Canjear y Reiniciar Tarjeta</button>`;
+                // Si no, mostramos el botón normal
+                zonaControles.innerHTML = `<button class="btn-accion btn-sumar" id="btnSumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
             }
 
             document.getElementById('tarjetaPuntos').style.display = 'block';
         }
 
         async function sumarVisita() {
-            if (visitasActuales < 7) {
-                visitasActuales++;
-                await db.collection("clientesFidelidad").doc(clienteActualId).update({ visitas: visitasActuales });
-                dibujarTarjeta();
-                if (visitasActuales === 7) alert("¡Su próxima lavada es GRATIS! 🎁");
+            if (visitasActuales < 7 && !visitaRegistradaEnEstaSesion) {
+                const btn = document.getElementById('btnSumar');
+                if(btn) { btn.disabled = true; btn.innerText = "⏳ Registrando..."; }
+
+                try {
+                    await db.collection("clientesFidelidad").doc(clienteActualId).update({ 
+                        visitas: visitasActuales + 1 
+                    });
+                    
+                    visitasActuales++;
+                    visitaRegistradaEnEstaSesion = true; // Activamos el candado para que ya no pueda volver a picarle
+                    dibujarTarjeta();
+                    
+                    if (visitasActuales === 7) {
+                        alert("¡Su próxima lavada es GRATIS! 🎁");
+                    }
+                    
+                } catch (error) {
+                    console.error("Operación bloqueada por Firebase:", error);
+                    alert("⚠️ Acción bloqueada por seguridad. Revisa las reglas de la base de datos.");
+                    if(btn) { btn.disabled = false; btn.innerText = "＋ Registrar Nueva Visita"; }
+                }
             }
         }
 
         async function canjearPremio() {
             if(confirm("¿Seguro que deseas canjear el premio? La tarjeta volverá a la lavada #1 usando el mismo número.")){
-                await db.collection("historialPremios").add({
-                    telefono: clienteActualId,
-                    fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                const btn = document.getElementById('btnCanjear');
+                if(btn) { btn.disabled = true; btn.innerText = "Canjeando..."; }
 
-                // Reinicia la cuenta a 1 pero conserva el mismo documento/tarjeta
-                visitasActuales = 1;
-                diasRestantes = 90;
-                await db.collection("clientesFidelidad").doc(clienteActualId).update({
-                    visitas: visitasActuales,
-                    fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("¡Premio entregado con éxito! Se ha iniciado un nuevo ciclo con el mismo número de tarjeta.");
-                dibujarTarjeta();
+                try {
+                    await db.collection("historialPremios").add({
+                        telefono: clienteActualId,
+                        fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection("clientesFidelidad").doc(clienteActualId).update({
+                        visitas: 1,
+                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    visitasActuales = 1;
+                    diasRestantes = 90;
+                    visitaRegistradaEnEstaSesion = true; // Activamos el candado de la nueva sesión
+                    alert("¡Premio entregado con éxito! Se ha iniciado un nuevo ciclo con el mismo número de tarjeta.");
+                    dibujarTarjeta();
+
+                } catch (error) {
+                    console.error("Bloqueado por Firebase:", error);
+                    alert("⚠️ Error de seguridad: El sistema bloqueó el canje del premio.");
+                    if(btn) { btn.disabled = false; btn.innerText = "🎁 Canjear y Reiniciar Tarjeta"; }
+                }
             }
         }
 
