@@ -85,16 +85,16 @@
     </div>
 
     <script>
-        // === PEGA TUS LLAVES DE FIREBASE AQUÍ ===
+        // === TUS LLAVES DE FIREBASE ===
         const firebaseConfig = {
-  apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
-  authDomain: "gota-express.firebaseapp.com",
-  projectId: "gota-express",
-  storageBucket: "gota-express.firebasestorage.app",
-  messagingSenderId: "610591122988",
-  appId: "1:610591122988:web:95d866ac9abc51a8291389",
-  measurementId: "G-H70GKB7Y6D"
-};
+          apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
+          authDomain: "gota-express.firebaseapp.com",
+          projectId: "gota-express",
+          storageBucket: "gota-express.firebasestorage.app",
+          messagingSenderId: "610591122988",
+          appId: "1:610591122988:web:95d866ac9abc51a8291389",
+          measurementId: "G-H70GKB7Y6D"
+        };
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -198,13 +198,11 @@
         }
 
         async function canjearPremio() {
-            // 1. Guardar el registro en el historial para el gerente
             await db.collection("historialPremios").add({
                 telefono: clienteActualId,
                 fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 2. Reiniciar la tarjeta del cliente
             visitasActuales = 1;
             diasRestantes = 90;
             await db.collection("clientesFidelidad").doc(clienteActualId).update({
@@ -215,18 +213,14 @@
             dibujarTarjeta();
         }
 
-        // === NUEVA FUNCIÓN: PANEL DE GERENTE ===
         async function verEstadisticas() {
             const pin = prompt("🔐 Acceso Restringido. Ingresa el PIN de Gerente:");
             
-            // Puedes cambiar "1234" por el PIN que prefieras
             if (pin === "1234") {
                 try {
-                    // Obtener el primer día del mes actual
                     const fechaHoy = new Date();
                     const primerDiaMes = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth(), 1);
 
-                    // Buscar en Firebase todos los premios entregados desde el día 1 de este mes
                     const snapshot = await db.collection("historialPremios")
                         .where("fechaCanje", ">=", primerDiaMes)
                         .get();
