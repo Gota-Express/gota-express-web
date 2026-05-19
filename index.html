@@ -37,108 +37,67 @@
         .logo-empresa { font-size: 26px; font-weight: 700; color: #0072ff; margin: 0; }
         .subtitulo { color: #64748b; font-size: 13px; margin-top: 4px; margin-bottom: 20px; }
         
-        /* Contenedor de Búsqueda */
-        .seccion-busqueda {
-            animation: fadeIn 0.4s ease;
-        }
+        .seccion-busqueda { animation: fadeIn 0.4s ease; }
         .seccion-busqueda input { 
-            width: 100%; 
-            padding: 14px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            font-family: 'Poppins', sans-serif; 
-            text-align: center; 
-            box-sizing: border-box; 
-            outline: none; 
-            transition: border-color 0.3s; 
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
+            font-size: 16px; font-family: 'Poppins', sans-serif; text-align: center; 
+            box-sizing: border-box; outline: none; transition: border-color 0.3s; 
         }
         .seccion-busqueda input:focus { border-color: #0072ff; }
         
         .btn-principal { 
-            width: 100%; 
-            padding: 14px; 
-            background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            margin-top: 12px; 
-            font-family: 'Poppins', sans-serif; 
-            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); 
-            transition: all 0.2s;
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); 
+            color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; 
+            cursor: pointer; margin-top: 12px; font-family: 'Poppins', sans-serif; 
+            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); transition: all 0.2s;
         }
         .btn-principal:active { transform: scale(0.98); }
         
-        /* Cabecera de la Tarjeta con Botón Regresar */
         .header-tarjeta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 10px;
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; position: relative;
         }
         
         .btn-atras {
-            background: #f1f5f9;
-            color: #475569;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-            transition: background 0.2s;
+            position: absolute; left: 0; top: 0;
+            background: #f1f5f9; color: #475569; border: none; padding: 6px 12px; 
+            border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; 
+            font-family: 'Poppins', sans-serif; transition: background 0.2s;
         }
         .btn-atras:hover { background: #e2e8f0; }
         
-        .tarjeta-puntos { 
-            display: none; 
-            animation: slideUp 0.4s ease; 
+        .badge-frecuente {
+            background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px; 
+            font-size: 11px; font-weight: 700; border: 1px solid #fde68a; margin-top: 5px; display: inline-block;
+        }
+
+        .numero-tarjeta {
+            font-family: monospace; font-size: 15px; font-weight: 700; color: #1e293b; 
+            letter-spacing: 1px; margin: 10px 0 0 0;
         }
         
-        /* Cuadrícula de Sellos Más Chiquitos y Compactos */
+        .tarjeta-puntos { display: none; animation: slideUp 0.4s ease; }
+        
         .cuadricula-sellos { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
-            margin-top: 15px; 
-            margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
+            margin-top: 15px; margin-bottom: 15px;
         }
         .sello-item:nth-child(7) { grid-column: span 2; aspect-ratio: auto; height: 100%; }
         
         .sello-item { 
-            background: #f8fafc; 
-            border: 2px dashed #cbd5e1; 
-            aspect-ratio: 1; 
-            border-radius: 14px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            position: relative; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            padding: 6px;
-            box-sizing: border-box;
+            background: #f8fafc; border: 2px dashed #cbd5e1; aspect-ratio: 1; border-radius: 14px; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 6px; box-sizing: border-box;
         }
         .sello-item.activo { 
-            background: #e0f2fe; 
-            border: 2px solid #0072ff; 
-            transform: scale(1.03); 
+            background: #e0f2fe; border: 2px solid #0072ff; transform: scale(1.03); 
             box-shadow: 0 4px 10px rgba(0, 114, 255, 0.1);
         }
         .sello-item.premio { border-color: #f59e0b; background: #fef3c7; }
         .sello-item.premio.activo { 
-            background: #d1fae5; 
-            border-color: #10b981; 
-            animation: pulso Verde 1.5s infinite; 
+            background: #d1fae5; border-color: #10b981; animation: pulsoVerde 1.5s infinite; 
         }
         
-        /* Iconos de las gotas más pequeños */
         .sello-logo { width: 32px; height: 32px; opacity: 0.15; transition: opacity 0.3s; }
         .activo .sello-logo { opacity: 1; }
         
@@ -147,45 +106,37 @@
         .premio .sello-numero { color: #d97706; }
         .premio.activo .sello-numero { color: #10b981; font-weight: 700; }
         
-        .mensaje-bienvenida { font-size: 15px; color: #1e293b; font-weight: 600; text-align: right; margin: 0; }
         .mensaje-vigencia { font-size: 12px; font-weight: 600; margin-top: 5px; color: #f59e0b; }
         
-        /* Nueva Barra de Progreso Azul */
         .contenedor-progreso {
-            width: 100%;
-            background-color: #e2e8f0;
-            border-radius: 10px;
-            height: 14px;
-            overflow: hidden;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%; background-color: #e2e8f0; border-radius: 10px; height: 14px; 
+            overflow: hidden; margin-top: 15px; margin-bottom: 5px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         .barra-progreso {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #0072ff, #00c6ff);
-            border-radius: 10px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%; width: 0%; background: linear-gradient(90deg, #0072ff, #00c6ff); 
+            border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .texto-contador {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 15px; 
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        .btn-accion { padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .btn-accion { 
+            padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; 
+            cursor: pointer; font-family: 'Poppins', sans-serif; width: 100%; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; 
+        }
         .btn-accion:active { transform: scale(0.98); }
         .btn-sumar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn-canjear { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; animation: pulsoAmarillo 1.2s infinite; }
 
-        .btn-gerente { background: transparent; color: #cbd5e1; border: none; margin-top: 25px; cursor: pointer; text-decoration: underline; font-family: 'Poppins', sans-serif; font-size: 11px; transition: color 0.3s; }
+        .btn-gerente { 
+            background: transparent; color: #cbd5e1; border: none; margin-top: 25px; 
+            cursor: pointer; text-decoration: underline; font-family: 'Poppins', sans-serif; 
+            font-size: 11px; transition: color 0.3s; 
+        }
         .btn-gerente:hover { color: #64748b; }
 
-        /* Animaciones */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulsoVerde { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 12px rgba(16, 185, 129, 0.5); } 100% { transform: scale(1); } }
@@ -206,7 +157,8 @@
         <div class="tarjeta-puntos" id="tarjetaPuntos">
             <div class="header-tarjeta">
                 <button class="btn-atras" onclick="regresarA()">⬅ Volver</button>
-                <p class="mensaje-bienvenida" id="textoCliente"></p>
+                <div class="badge-frecuente">★ Cliente Frecuente ★</div>
+                <p class="numero-tarjeta" id="textoCliente"></p>
             </div>
             
             <p class="mensaje-vigencia" id="textoVigencia"></p>
@@ -225,7 +177,6 @@
     </div>
 
     <script>
-        // === CONFIGURACIÓN DE FIREBASE (Tus llaves intactas) ===
         const firebaseConfig = {
             apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
             authDomain: "gota-express.firebaseapp.com",
@@ -265,35 +216,27 @@
                 diasRestantes = LIMITE_DIAS - diasTranscurridos;
 
                 if (diasRestantes < 0 && data.visitas < 7) {
-                    alert("⚠️ Han pasado más de 3 meses. La tarjeta caducó y se reiniciará, pero le otorgaremos su estampa de bienvenida nuevamente.");
+                    alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
                     visitasActuales = 1;
                     diasRestantes = 90;
-                    await docRef.update({
-                        visitas: 1,
-                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    await docRef.update({ visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
                 } else {
                     visitasActuales = data.visitas;
                 }
-
             } else {
                 visitasActuales = 1; 
                 diasRestantes = 90;
-                await docRef.set({
-                    telefono: telefono,
-                    visitas: visitasActuales,
-                    fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("¡Cliente registrado! 1ra estampa gratis otorgada. 🎉");
+                await docRef.set({ telefono: telefono, visitas: visitasActuales, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
             }
 
-            // Ocultar buscador y mostrar tarjeta de puntos
             document.getElementById('vistaBusqueda').style.display = 'none';
             dibujarTarjeta();
         }
 
         function dibujarTarjeta() {
-            document.getElementById('textoCliente').innerText = `📱 ${clienteActualId}`;
+            // Aquí agregamos "Tarjeta No." al número del cliente
+            document.getElementById('textoCliente').innerText = `Tarjeta No. ${clienteActualId}`;
             const textoVigencia = document.getElementById('textoVigencia');
             
             if(visitasActuales < 7) {
@@ -304,8 +247,6 @@
                 textoVigencia.style.color = "#10b981";
             }
 
-            // Actualizar Barra de Progreso Azul (Calculado sobre las 6 lavadas pagadas)
-            // Si tiene 7 visitas es porque ya completó el ciclo para el premio.
             const lavadasCompletadas = Math.min(visitasActuales, 7);
             const porcentajeBarra = ((Math.min(lavadasCompletadas, 6)) / 6) * 100;
             document.getElementById('barraProgreso').style.width = porcentajeBarra + '%';
@@ -337,7 +278,7 @@
             if (visitasActuales < 7) {
                 zonaControles.innerHTML = `<button class="btn-accion btn-sumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
             } else {
-                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" onclick="canjearPremio()">🎁 Canjear Lavada Gratis</button>`;
+                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" onclick="canjearPremio()">🎁 Canjear y Reiniciar Tarjeta</button>`;
             }
 
             document.getElementById('tarjetaPuntos').style.display = 'block';
@@ -353,26 +294,28 @@
         }
 
         async function canjearPremio() {
-            await db.collection("historialPremios").add({
-                telefono: clienteActualId,
-                fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            if(confirm("¿Seguro que deseas canjear el premio? La tarjeta volverá a la lavada #1 usando el mismo número.")){
+                await db.collection("historialPremios").add({
+                    telefono: clienteActualId,
+                    fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
+                });
 
-            visitasActuales = 1;
-            diasRestantes = 90;
-            await db.collection("clientesFidelidad").doc(clienteActualId).update({
-                visitas: visitasActuales,
-                fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert("¡Premio entregado! La tarjeta se reinició con su estampa de bienvenida.");
-            dibujarTarjeta();
+                // Reinicia la cuenta a 1 pero conserva el mismo documento/tarjeta
+                visitasActuales = 1;
+                diasRestantes = 90;
+                await db.collection("clientesFidelidad").doc(clienteActualId).update({
+                    visitas: visitasActuales,
+                    fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("¡Premio entregado con éxito! Se ha iniciado un nuevo ciclo con el mismo número de tarjeta.");
+                dibujarTarjeta();
+            }
         }
 
-        // Nueva Función para regresar a la pantalla de búsqueda limpia
         function regresarA() {
             document.getElementById('tarjetaPuntos').style.display = 'none';
             document.getElementById('vistaBusqueda').style.display = 'block';
-            document.getElementById('inputTelefono').value = ''; // Limpia el input
+            document.getElementById('inputTelefono').value = ''; 
             clienteActualId = null;
         }
 
