@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gota Express - Club de Fidelidad</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); min-height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
+        .contenedor { background: #ffffff; padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); text-align: center; position: relative; }
+        .logo-empresa { font-size: 28px; font-weight: 700; color: #0072ff; margin: 0; }
+        .subtitulo { color: #64748b; font-size: 14px; margin-top: 5px; margin-bottom: 25px; }
+        
+        .seccion-busqueda input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; font-family: 'Poppins', sans-serif; text-align: center; box-sizing: border-box; outline: none; transition: border-color 0.3s; }
+        .seccion-busqueda input:focus { border-color: #0072ff; }
+        
+        .btn-principal { width: 100%; padding: 14px; background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; font-family: 'Poppins', sans-serif; box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); }
+        
+        .tarjeta-puntos { display: none; margin-top: 25px; animation: fadeIn 0.5s ease; }
+        .cuadricula-sellos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+        .sello-item:nth-child(7) { grid-column: span 2; }
+        
+        .sello-item { background: #f8fafc; border: 2px dashed #cbd5e1; aspect-ratio: 1; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; transition: all 0.3s ease; }
+        .sello-item.activo { background: #e0f2fe; border: 2px solid #0072ff; border-dasharray: none; transform: scale(1.05); }
+        .sello-item.premio { border-color: #f59e0b; background: #fef3c7; }
+        .sello-item.premio.activo { background: #d1fae5; border-color: #10b981; animation: pulso 1.5s infinite; }
+        
+        .sello-logo { width: 45px; height: 45px; opacity: 0.15; transition: opacity 0.3s; }
+        .activo .sello-logo { opacity: 1; }
+        
+        .sello-numero { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
+        .activo .sello-numero { color: #0072ff; }
+        .premio .sello-numero { color: #d97706; }
+        .premio.activo .sello-numero { color: #10b981; }
+        
+        .mensaje-bienvenida { font-size: 16px; color: #1e293b; font-weight: 600; margin: 0; }
+        .mensaje-vigencia { font-size: 12px; font-weight: 600; margin-top: 5px; color: #f59e0b; }
+        
+        .btn-accion { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; margin-top: 20px; width: 100%; }
+        .btn-sumar { background-color: #10b981; color: white; }
+        .btn-canjear { background-color: #f59e0b; color: white; animation: pulso 1s infinite; }
+
+        /* Estilo del botón secreto del gerente */
+        .btn-gerente {
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            margin-top: 30px;
+            cursor: pointer;
+            text-decoration: underline;
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            transition: color 0.3s;
+        }
+        .btn-gerente:hover { color: #64748b; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulso { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1 class="logo-empresa">💧 Gota Express</h1>
+        <p class="subtitulo">Tarjeta de Puntos Digital</p>
+
+        <div class="seccion-busqueda">
+            <input type="tel" id="inputTelefono" placeholder="Teléfono del cliente (10 dígitos)" maxlength="10">
+            <button class="btn-principal" onclick="buscarOAgregarCliente()">Buscar Tarjeta</button>
+        </div>
+
+        <div class="tarjeta-puntos" id="tarjetaPuntos">
+            <p class="mensaje-bienvenida" id="textoCliente"></p>
+            <p class="mensaje-vigencia" id="textoVigencia"></p>
+            
+            <div class="cuadricula-sellos" id="gridSellos"></div>
+            <div id="zonaControles"></div>
+        </div>
+
+        <button class="btn-gerente" onclick="verEstadisticas()">Panel de Gerente</button>
+    </div>
+
+    <script>
+        // === PEGA TUS LLAVES DE FIREBASE AQUÍ ===
+        const firebaseConfig = {
+  apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
+  authDomain: "gota-express.firebaseapp.com",
+  projectId: "gota-express",
+  storageBucket: "gota-express.firebasestorage.app",
+  messagingSenderId: "610591122988",
+  appId: "1:610591122988:web:95d866ac9abc51a8291389",
+  measurementId: "G-H70GKB7Y6D"
+};
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let clienteActualId = null;
+        let visitasActuales = 0;
+        let diasRestantes = 90;
+        const LIMITE_DIAS = 90;
+
+        const logoGotaExpressSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#0072ff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
+        const logoPremioSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#f59e0b" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+
+        async function buscarOAgregarCliente() {
+            const telefono = document.getElementById('inputTelefono').value.trim();
+            if (telefono.length < 10) { alert("Ingresa un número de 10 dígitos."); return; }
+
+            clienteActualId = telefono;
+            const docRef = db.collection("clientesFidelidad").doc(telefono);
+            const doc = await docRef.get();
+
+            if (doc.exists()) {
+                const data = doc.data();
+                const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
+                const hoy = new Date();
+                const milisegundosTranscurridos = hoy - fechaInicio;
+                const diasTranscurridos = Math.floor(milisegundosTranscurridos / (1000 * 60 * 60 * 24));
+                
+                diasRestantes = LIMITE_DIAS - diasTranscurridos;
+
+                if (diasRestantes < 0 && data.visitas < 7) {
+                    alert("⚠️ Han pasado más de 3 meses. La tarjeta caducó y se reiniciará, pero le otorgaremos su estampa de bienvenida nuevamente.");
+                    visitasActuales = 1;
+                    diasRestantes = 90;
+                    await docRef.update({
+                        visitas: 1,
+                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    visitasActuales = data.visitas;
+                }
+
+            } else {
+                visitasActuales = 1; 
+                diasRestantes = 90;
+                await docRef.set({
+                    telefono: telefono,
+                    visitas: visitasActuales,
+                    fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("¡Cliente registrado! 1ra estampa gratis otorgada. 🎉");
+            }
+
+            dibujarTarjeta();
+        }
+
+        function dibujarTarjeta() {
+            document.getElementById('textoCliente').innerText = `📱 ${clienteActualId}`;
+            const textoVigencia = document.getElementById('textoVigencia');
+            if(visitasActuales < 7) {
+                textoVigencia.innerText = `⏳ Caduca en: ${diasRestantes} días`;
+                textoVigencia.style.color = diasRestantes <= 15 ? "#ef4444" : "#f59e0b";
+            } else {
+                textoVigencia.innerText = "¡PREMIO DESBLOQUEADO!";
+                textoVigencia.style.color = "#10b981";
+            }
+
+            const grid = document.getElementById('gridSellos');
+            const zonaControles = document.getElementById('zonaControles');
+            grid.innerHTML = ''; zonaControles.innerHTML = '';
+
+            for (let i = 1; i <= 7; i++) {
+                const div = document.createElement('div');
+                div.classList.add('sello-item');
+                if (i === 7) div.classList.add('premio');
+                if (i <= visitasActuales) div.classList.add('activo');
+
+                if (i === 7) {
+                    div.innerHTML = logoPremioSVG + `<span class="sello-numero">${visitasActuales === 7 ? '¡GRATIS!' : 'Premio'}</span>`;
+                } else {
+                    div.innerHTML = logoGotaExpressSVG + `<span class="sello-numero">${i === 1 ? 'Bienvenida' : 'Lavada ' + i}</span>`;
+                }
+                grid.appendChild(div);
+            }
+
+            if (visitasActuales < 7) {
+                zonaControles.innerHTML = `<button class="btn-accion btn-sumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
+            } else {
+                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" onclick="canjearPremio()">🎁 Canjear Lavada Gratis</button>`;
+            }
+
+            document.getElementById('tarjetaPuntos').style.display = 'block';
+        }
+
+        async function sumarVisita() {
+            if (visitasActuales < 7) {
+                visitasActuales++;
+                await db.collection("clientesFidelidad").doc(clienteActualId).update({ visitas: visitasActuales });
+                dibujarTarjeta();
+                if (visitasActuales === 7) alert("¡Su próxima lavada es GRATIS! 🎁");
+            }
+        }
+
+        async function canjearPremio() {
+            // 1. Guardar el registro en el historial para el gerente
+            await db.collection("historialPremios").add({
+                telefono: clienteActualId,
+                fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 2. Reiniciar la tarjeta del cliente
+            visitasActuales = 1;
+            diasRestantes = 90;
+            await db.collection("clientesFidelidad").doc(clienteActualId).update({
+                visitas: visitasActuales,
+                fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("¡Premio entregado! La tarjeta se reinició con su estampa de bienvenida y le quedan 90 días nuevamente.");
+            dibujarTarjeta();
+        }
+
+        // === NUEVA FUNCIÓN: PANEL DE GERENTE ===
+        async function verEstadisticas() {
+            const pin = prompt("🔐 Acceso Restringido. Ingresa el PIN de Gerente:");
+            
+            // Puedes cambiar "1234" por el PIN que prefieras
+            if (pin === "1234") {
+                try {
+                    // Obtener el primer día del mes actual
+                    const fechaHoy = new Date();
+                    const primerDiaMes = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth(), 1);
+
+                    // Buscar en Firebase todos los premios entregados desde el día 1 de este mes
+                    const snapshot = await db.collection("historialPremios")
+                        .where("fechaCanje", ">=", primerDiaMes)
+                        .get();
+
+                    alert(`📊 ESTADÍSTICAS DEL MES\n\nSe han regalado un total de: ${snapshot.size} lavadas gratis en este mes.`);
+                } catch (error) {
+                    console.error(error);
+                    alert("Hubo un error al cargar las estadísticas. Revisa tu conexión.");
+                }
+            } else if (pin !== null) {
+                alert("❌ PIN Incorrecto");
+            }
+        }
+    </script>
+</body>
+</html>
