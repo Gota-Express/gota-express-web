@@ -10,56 +10,186 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); min-height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
-        .contenedor { background: #ffffff; padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); text-align: center; position: relative; }
-        .logo-empresa { font-size: 28px; font-weight: 700; color: #0072ff; margin: 0; }
-        .subtitulo { color: #64748b; font-size: 14px; margin-top: 5px; margin-bottom: 25px; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); 
+            min-height: 100vh; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 15px; 
+            box-sizing: border-box; 
+        }
         
-        .seccion-busqueda input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; font-family: 'Poppins', sans-serif; text-align: center; box-sizing: border-box; outline: none; transition: border-color 0.3s; }
+        .contenedor { 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 430px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+            text-align: center; 
+            position: relative; 
+            overflow: hidden;
+        }
+        
+        .logo-empresa { font-size: 26px; font-weight: 700; color: #0072ff; margin: 0; }
+        .subtitulo { color: #64748b; font-size: 13px; margin-top: 4px; margin-bottom: 20px; }
+        
+        /* Contenedor de Búsqueda */
+        .seccion-busqueda {
+            animation: fadeIn 0.4s ease;
+        }
+        .seccion-busqueda input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-family: 'Poppins', sans-serif; 
+            text-align: center; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: border-color 0.3s; 
+        }
         .seccion-busqueda input:focus { border-color: #0072ff; }
         
-        .btn-principal { width: 100%; padding: 14px; background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; font-family: 'Poppins', sans-serif; box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); }
+        .btn-principal { 
+            width: 100%; 
+            padding: 14px; 
+            background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 12px; 
+            font-family: 'Poppins', sans-serif; 
+            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.2); 
+            transition: all 0.2s;
+        }
+        .btn-principal:active { transform: scale(0.98); }
         
-        .tarjeta-puntos { display: none; margin-top: 25px; animation: fadeIn 0.5s ease; }
-        .cuadricula-sellos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
-        .sello-item:nth-child(7) { grid-column: span 2; }
+        /* Cabecera de la Tarjeta con Botón Regresar */
+        .header-tarjeta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
         
-        .sello-item { background: #f8fafc; border: 2px dashed #cbd5e1; aspect-ratio: 1; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; transition: all 0.3s ease; }
-        .sello-item.activo { background: #e0f2fe; border: 2px solid #0072ff; border-dasharray: none; transform: scale(1.05); }
+        .btn-atras {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-atras:hover { background: #e2e8f0; }
+        
+        .tarjeta-puntos { 
+            display: none; 
+            animation: slideUp 0.4s ease; 
+        }
+        
+        /* Cuadrícula de Sellos Más Chiquitos y Compactos */
+        .cuadricula-sellos { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            margin-top: 15px; 
+            margin-bottom: 15px;
+        }
+        .sello-item:nth-child(7) { grid-column: span 2; aspect-ratio: auto; height: 100%; }
+        
+        .sello-item { 
+            background: #f8fafc; 
+            border: 2px dashed #cbd5e1; 
+            aspect-ratio: 1; 
+            border-radius: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            padding: 6px;
+            box-sizing: border-box;
+        }
+        .sello-item.activo { 
+            background: #e0f2fe; 
+            border: 2px solid #0072ff; 
+            transform: scale(1.03); 
+            box-shadow: 0 4px 10px rgba(0, 114, 255, 0.1);
+        }
         .sello-item.premio { border-color: #f59e0b; background: #fef3c7; }
-        .sello-item.premio.activo { background: #d1fae5; border-color: #10b981; animation: pulso 1.5s infinite; }
+        .sello-item.premio.activo { 
+            background: #d1fae5; 
+            border-color: #10b981; 
+            animation: pulso Verde 1.5s infinite; 
+        }
         
-        .sello-logo { width: 45px; height: 45px; opacity: 0.15; transition: opacity 0.3s; }
+        /* Iconos de las gotas más pequeños */
+        .sello-logo { width: 32px; height: 32px; opacity: 0.15; transition: opacity 0.3s; }
         .activo .sello-logo { opacity: 1; }
         
-        .sello-numero { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
+        .sello-numero { font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 4px; }
         .activo .sello-numero { color: #0072ff; }
         .premio .sello-numero { color: #d97706; }
-        .premio.activo .sello-numero { color: #10b981; }
+        .premio.activo .sello-numero { color: #10b981; font-weight: 700; }
         
-        .mensaje-bienvenida { font-size: 16px; color: #1e293b; font-weight: 600; margin: 0; }
+        .mensaje-bienvenida { font-size: 15px; color: #1e293b; font-weight: 600; text-align: right; margin: 0; }
         .mensaje-vigencia { font-size: 12px; font-weight: 600; margin-top: 5px; color: #f59e0b; }
         
-        .btn-accion { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; margin-top: 20px; width: 100%; }
-        .btn-sumar { background-color: #10b981; color: white; }
-        .btn-canjear { background-color: #f59e0b; color: white; animation: pulso 1s infinite; }
-
-        /* Estilo del botón secreto del gerente */
-        .btn-gerente {
-            background: transparent;
-            color: #cbd5e1;
-            border: none;
-            margin-top: 30px;
-            cursor: pointer;
-            text-decoration: underline;
-            font-family: 'Poppins', sans-serif;
-            font-size: 12px;
-            transition: color 0.3s;
+        /* Nueva Barra de Progreso Azul */
+        .contenedor-progreso {
+            width: 100%;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            height: 14px;
+            overflow: hidden;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
+        .barra-progreso {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0072ff, #00c6ff);
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .texto-contador {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-accion { padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .btn-accion:active { transform: scale(0.98); }
+        .btn-sumar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .btn-canjear { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; animation: pulsoAmarillo 1.2s infinite; }
+
+        .btn-gerente { background: transparent; color: #cbd5e1; border: none; margin-top: 25px; cursor: pointer; text-decoration: underline; font-family: 'Poppins', sans-serif; font-size: 11px; transition: color 0.3s; }
         .btn-gerente:hover { color: #64748b; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulso { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); } 100% { transform: scale(1); } }
+        /* Animaciones */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulsoVerde { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 12px rgba(16, 185, 129, 0.5); } 100% { transform: scale(1); } }
+        @keyframes pulsoAmarillo { 0% { transform: scale(1); } 50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -68,16 +198,26 @@
         <h1 class="logo-empresa">💧 Gota Express</h1>
         <p class="subtitulo">Tarjeta de Puntos Digital</p>
 
-        <div class="seccion-busqueda">
+        <div class="seccion-busqueda" id="vistaBusqueda">
             <input type="tel" id="inputTelefono" placeholder="Teléfono del cliente (10 dígitos)" maxlength="10">
             <button class="btn-principal" onclick="buscarOAgregarCliente()">Buscar Tarjeta</button>
         </div>
 
         <div class="tarjeta-puntos" id="tarjetaPuntos">
-            <p class="mensaje-bienvenida" id="textoCliente"></p>
+            <div class="header-tarjeta">
+                <button class="btn-atras" onclick="regresarA()">⬅ Volver</button>
+                <p class="mensaje-bienvenida" id="textoCliente"></p>
+            </div>
+            
             <p class="mensaje-vigencia" id="textoVigencia"></p>
             
             <div class="cuadricula-sellos" id="gridSellos"></div>
+            
+            <div class="contenedor-progreso">
+                <div class="barra-progreso" id="barraProgreso"></div>
+            </div>
+            <div class="texto-contador" id="textoContador">0 de 6 pasos completados</div>
+            
             <div id="zonaControles"></div>
         </div>
 
@@ -85,15 +225,15 @@
     </div>
 
     <script>
-        // === TUS LLAVES DE FIREBASE ===
+        // === CONFIGURACIÓN DE FIREBASE (Tus llaves intactas) ===
         const firebaseConfig = {
-          apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
-          authDomain: "gota-express.firebaseapp.com",
-          projectId: "gota-express",
-          storageBucket: "gota-express.firebasestorage.app",
-          messagingSenderId: "610591122988",
-          appId: "1:610591122988:web:95d866ac9abc51a8291389",
-          measurementId: "G-H70GKB7Y6D"
+            apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
+            authDomain: "gota-express.firebaseapp.com",
+            projectId: "gota-express",
+            storageBucket: "gota-express.firebasestorage.app",
+            messagingSenderId: "610591122988",
+            appId: "1:610591122988:web:95d866ac9abc51a8291389",
+            measurementId: "G-H70GKB7Y6D"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -147,18 +287,33 @@
                 alert("¡Cliente registrado! 1ra estampa gratis otorgada. 🎉");
             }
 
+            // Ocultar buscador y mostrar tarjeta de puntos
+            document.getElementById('vistaBusqueda').style.display = 'none';
             dibujarTarjeta();
         }
 
         function dibujarTarjeta() {
             document.getElementById('textoCliente').innerText = `📱 ${clienteActualId}`;
             const textoVigencia = document.getElementById('textoVigencia');
+            
             if(visitasActuales < 7) {
                 textoVigencia.innerText = `⏳ Caduca en: ${diasRestantes} días`;
                 textoVigencia.style.color = diasRestantes <= 15 ? "#ef4444" : "#f59e0b";
             } else {
                 textoVigencia.innerText = "¡PREMIO DESBLOQUEADO!";
                 textoVigencia.style.color = "#10b981";
+            }
+
+            // Actualizar Barra de Progreso Azul (Calculado sobre las 6 lavadas pagadas)
+            // Si tiene 7 visitas es porque ya completó el ciclo para el premio.
+            const lavadasCompletadas = Math.min(visitasActuales, 7);
+            const porcentajeBarra = ((Math.min(lavadasCompletadas, 6)) / 6) * 100;
+            document.getElementById('barraProgreso').style.width = porcentajeBarra + '%';
+            
+            if(visitasActuales >= 7) {
+                document.getElementById('textoContador').innerText = `¡Listo para reclamar tu 7ma lavada gratis!`;
+            } else {
+                document.getElementById('textoContador').innerText = `${visitasActuales} de 6 lavados registrados`;
             }
 
             const grid = document.getElementById('gridSellos');
@@ -172,7 +327,7 @@
                 if (i <= visitasActuales) div.classList.add('activo');
 
                 if (i === 7) {
-                    div.innerHTML = logoPremioSVG + `<span class="sello-numero">${visitasActuales === 7 ? '¡GRATIS!' : 'Premio'}</span>`;
+                    div.innerHTML = logoPremioSVG + `<span class="sello-numero">${visitasActuales === 7 ? '¡GRATIS!' : '7ma Gratis'}</span>`;
                 } else {
                     div.innerHTML = logoGotaExpressSVG + `<span class="sello-numero">${i === 1 ? 'Bienvenida' : 'Lavada ' + i}</span>`;
                 }
@@ -209,13 +364,20 @@
                 visitas: visitasActuales,
                 fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert("¡Premio entregado! La tarjeta se reinició con su estampa de bienvenida y le quedan 90 días nuevamente.");
+            alert("¡Premio entregado! La tarjeta se reinició con su estampa de bienvenida.");
             dibujarTarjeta();
+        }
+
+        // Nueva Función para regresar a la pantalla de búsqueda limpia
+        function regresarA() {
+            document.getElementById('tarjetaPuntos').style.display = 'none';
+            document.getElementById('vistaBusqueda').style.display = 'block';
+            document.getElementById('inputTelefono').value = ''; // Limpia el input
+            clienteActualId = null;
         }
 
         async function verEstadisticas() {
             const pin = prompt("🔐 Acceso Restringido. Ingresa el PIN de Gerente:");
-            
             if (pin === "1234") {
                 try {
                     const fechaHoy = new Date();
@@ -228,7 +390,7 @@
                     alert(`📊 ESTADÍSTICAS DEL MES\n\nSe han regalado un total de: ${snapshot.size} lavadas gratis en este mes.`);
                 } catch (error) {
                     console.error(error);
-                    alert("Hubo un error al cargar las estadísticas. Revisa tu conexión.");
+                    alert("Hubo un error al cargar las estadísticas.");
                 }
             } else if (pin !== null) {
                 alert("❌ PIN Incorrecto");
