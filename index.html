@@ -115,7 +115,7 @@
             const docRef = db.collection("clientesFidelidad").doc(telefono);
             const doc = await docRef.get();
 
-            if (doc.exists()) {
+            if (doc.exists) {
                 const data = doc.data();
                 const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
                 const hoy = new Date();
