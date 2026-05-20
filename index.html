@@ -7,6 +7,8 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         
@@ -58,14 +60,6 @@
             display: flex; flex-direction: column; align-items: center;
             margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; position: relative;
         }
-        
-        .btn-atras {
-            position: absolute; left: 0; top: 0;
-            background: #f1f5f9; color: #475569; border: none; padding: 6px 12px; 
-            border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; 
-            font-family: 'Poppins', sans-serif; transition: background 0.2s;
-        }
-        .btn-atras:hover { background: #e2e8f0; }
         
         .badge-frecuente {
             background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px; 
@@ -132,18 +126,16 @@
         
         .btn-sumar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn-canjear { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; animation: pulsoAmarillo 1.2s infinite; }
-        
-        .mensaje-exito {
-            background: #d1fae5; color: #047857; padding: 12px; border-radius: 12px;
-            font-weight: 600; font-size: 14px; border: 1px solid #34d399; animation: fadeIn 0.5s ease;
-        }
 
-        .btn-gerente { 
-            background: transparent; color: #cbd5e1; border: none; margin-top: 25px; 
-            cursor: pointer; text-decoration: underline; font-family: 'Poppins', sans-serif; 
-            font-size: 11px; transition: color 0.3s; 
-        }
-        .btn-gerente:hover { color: #64748b; }
+        /* Estilos nuevos para la sección CRM */
+        .seccion-crm { display: none; margin-top: 25px; border-top: 2px dashed #e2e8f0; padding-top: 20px; text-align: left; }
+        .titulo-crm { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .lista-ausentes { max-height: 200px; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
+        .item-ausente { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 13px; border: 1px solid #e2e8f0; }
+        .info-ausente { display: flex; flex-direction: column; }
+        .tel-ausente { font-weight: 700; color: #334155; }
+        .dias-ausente { font-size: 11px; color: #ef4444; font-weight: 600; }
+        .btn-wa { background: #25d366; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -164,7 +156,6 @@
 
         <div class="tarjeta-puntos" id="tarjetaPuntos">
             <div class="header-tarjeta">
-                <button class="btn-atras" onclick="regresarA()">⬅ Volver</button>
                 <div class="badge-frecuente">★ Cliente Frecuente ★</div>
                 <p class="numero-tarjeta" id="textoCliente"></p>
             </div>
@@ -181,7 +172,15 @@
             <div id="zonaControles"></div>
         </div>
 
-        <button class="btn-gerente" onclick="verEstadisticas()">Panel de Gerente</button>
+        <div class="seccion-crm" id="panelCrm">
+            <div class="titulo-crm">
+                <span>📊 Control de Recompra (CRM)</span>
+                <button onclick="cargarClientesAusentes()" style="font-size: 11px; padding: 4px 8px; cursor: pointer; border-radius: 6px; border: 1px solid #cbd5e1; background: white;">🔄 Actualizar</button>
+            </div>
+            <ul class="lista-ausentes" id="listaAusentesContainer">
+                <li style="color: #94a3b8; font-size: 12px; text-align: center; padding: 10px;">Presiona actualizar para ver alertas...</li>
+            </ul>
+        </div>
     </div>
 
     <script>
@@ -201,53 +200,107 @@
         let clienteActualId = null;
         let visitasActuales = 0;
         let diasRestantes = 90;
-        let visitaRegistradaEnEstaSesion = false; // Candado para evitar clics múltiples
+        let visitaRegistradaEnEstaSesion = false; 
+        let listenerFirebase = null; 
         const LIMITE_DIAS = 90;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const esAdmin = urlParams.get('admin') === 'gota';
+
+        // Activar el Panel CRM visualmente si entra el Administrador
+        document.addEventListener("DOMContentLoaded", () => {
+            if (esAdmin) {
+                document.getElementById('panelCrm').style.display = 'block';
+                cargarClientesAusentes();
+            }
+        });
 
         const logoGotaExpressSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#0072ff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
         const logoPremioSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#f59e0b" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+
+        function lanzarConfeti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
 
         async function buscarOAgregarCliente() {
             const telefono = document.getElementById('inputTelefono').value.trim();
             if (telefono.length < 10) { alert("Ingresa un número de 10 dígitos."); return; }
 
-            // Bloquear botón mientras busca
             document.getElementById('btnBuscar').disabled = true;
             document.getElementById('btnBuscar').innerText = "Buscando...";
 
             clienteActualId = telefono;
-            visitaRegistradaEnEstaSesion = false; // Reseteamos el candado al buscar a alguien
+            visitaRegistradaEnEstaSesion = false; 
             
             try {
                 const docRef = db.collection("clientesFidelidad").doc(telefono);
-                const doc = await docRef.get();
+                
+                if (listenerFirebase) { listenerFirebase(); }
 
-                if (doc.exists) {
-                    const data = doc.data();
-                    const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
-                    const hoy = new Date();
-                    const diasTranscurridos = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
-                    
-                    diasRestantes = LIMITE_DIAS - diasTranscurridos;
-
-                    if (diasRestantes < 0 && data.visitas < 7) {
-                        alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
-                        visitasActuales = 1;
-                        diasRestantes = 90;
-                        await docRef.update({ visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
-                    } else {
-                        visitasActuales = data.visitas;
+                const docInicial = await docRef.get();
+                if (!docInicial.exists) {
+                    await docRef.set({ 
+                        telefono: telefono, 
+                        visitas: 1, 
+                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp(),
+                        ultimaVisita: firebase.firestore.FieldValue.serverTimestamp() // Campo nuevo CRM
+                    });
+                    if (esAdmin) {
+                        alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
+                        visitaRegistradaEnEstaSesion = true; 
                     }
-                } else {
-                    visitasActuales = 1; 
-                    diasRestantes = 90;
-                    await docRef.set({ telefono: telefono, visitas: visitasActuales, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
-                    alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
-                    visitaRegistradaEnEstaSesion = true; // Si es nuevo, ya le dimos su primera visita hoy
                 }
 
-                document.getElementById('vistaBusqueda').style.display = 'none';
-                dibujarTarjeta();
+                listenerFirebase = docRef.onSnapshot(async (doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
+                        const hoy = new Date();
+                        const diasTranscurridos = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
+                        
+                        diasRestantes = LIMITE_DIAS - diasTranscurridos;
+                        let visitasAnteriores = visitasActuales;
+
+                        if (diasRestantes < 0 && data.visitas < 7) {
+                            if (esAdmin) {
+                                alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
+                                await docRef.update({ 
+                                    visitas: 1, 
+                                    fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp(),
+                                    ultimaVisita: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                            visitasActuales = 1;
+                            diasRestantes = 90;
+                        } else {
+                            visitasActuales = data.visitas;
+                        }
+
+                        if (visitasAnteriores > 0 && visitasAnteriores < 7 && visitasActuales === 7) {
+                            lanzarConfeti();
+                        } else if (visitasActuales === 7 && visitasAnteriores === 0) {
+                            lanzarConfeti();
+                        }
+
+                        document.getElementById('vistaBusqueda').style.display = 'none';
+                        dibujarTarjeta();
+                    }
+                });
+
             } catch (error) {
                 console.error(error);
                 alert("Error al conectar con la base de datos.");
@@ -281,7 +334,9 @@
 
             const grid = document.getElementById('gridSellos');
             const zonaControles = document.getElementById('zonaControles');
-            grid.innerHTML = ''; zonaControles.innerHTML = '';
+            
+            grid.innerHTML = ''; 
+            zonaControles.innerHTML = '';
 
             for (let i = 1; i <= 7; i++) {
                 const div = document.createElement('div');
@@ -297,15 +352,18 @@
                 grid.appendChild(div);
             }
 
-            // Lógica de los botones con el candado
-            if (visitasActuales >= 7) {
-                zonaControles.innerHTML = `<button class="btn-accion btn-canjear" id="btnCanjear" onclick="canjearPremio()">🎁 Canjear y Reiniciar Tarjeta</button>`;
-            } else if (visitaRegistradaEnEstaSesion) {
-                // Si ya se registró una visita hoy, mostramos el mensaje de éxito y quitamos el botón temporalmente
-                zonaControles.innerHTML = `<div class="mensaje-exito">✅ Lavada registrada correctamente.</div>`;
+            if (esAdmin) {
+                if (visitasActuales >= 7) {
+                    zonaControles.innerHTML = `<button class="btn-accion btn-canjear" id="btnCanjear" onclick="canjearPremio()">🎁 Canjear y Reiniciar Tarjeta</button>`;
+                } else if (!visitaRegistradaEnEstaSesion) {
+                    zonaControles.innerHTML = `<button class="btn-accion btn-sumar" id="btnSumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
+                }
             } else {
-                // Si no, mostramos el botón normal
-                zonaControles.innerHTML = `<button class="btn-accion btn-sumar" id="btnSumar" onclick="sumarVisita()">＋ Registrar Nueva Visita</button>`;
+                if (visitasActuales >= 7) {
+                    zonaControles.innerHTML = `<p style="color: #10b981; font-weight: bold; text-align: center; margin-top: 15px;">¡Felicidades! Tienes una lavada gratis. Muestra esta pantalla al personal.</p>`;
+                } else {
+                    zonaControles.innerHTML = `<p style="color: #64748b; font-size: 13px; text-align: center; margin-top: 15px;">Muestra esta pantalla al personal en la sucursal para que registren tu lavado.</p>`;
+                }
             }
 
             document.getElementById('tarjetaPuntos').style.display = 'block';
@@ -318,27 +376,22 @@
 
                 try {
                     await db.collection("clientesFidelidad").doc(clienteActualId).update({ 
-                        visitas: visitasActuales + 1 
+                        visitas: visitasActuales + 1,
+                        ultimaVisita: firebase.firestore.FieldValue.serverTimestamp() // Alerta CRM al día
                     });
                     
-                    visitasActuales++;
-                    visitaRegistradaEnEstaSesion = true; // Activamos el candado para que ya no pueda volver a picarle
-                    dibujarTarjeta();
-                    
-                    if (visitasActuales === 7) {
-                        alert("¡Su próxima lavada es GRATIS! 🎁");
-                    }
-                    
+                    visitaRegistradaEnEstaSesion = true; 
+                    if(esAdmin) cargarClientesAusentes(); // Refrescar el CRM
                 } catch (error) {
                     console.error("Operación bloqueada por Firebase:", error);
-                    alert("⚠️ Acción bloqueada por seguridad. Revisa las reglas de la base de datos.");
+                    alert("⚠️ Acción bloqueada por seguridad.");
                     if(btn) { btn.disabled = false; btn.innerText = "＋ Registrar Nueva Visita"; }
                 }
             }
         }
 
         async function canjearPremio() {
-            if(confirm("¿Seguro que deseas canjear el premio? La tarjeta volverá a la lavada #1 usando el mismo número.")){
+            if(confirm("¿Seguro que deseas canjear el premio? La tarjeta volverá a la lavada #1.")){
                 const btn = document.getElementById('btnCanjear');
                 if(btn) { btn.disabled = true; btn.innerText = "Canjeando..."; }
 
@@ -350,48 +403,66 @@
 
                     await db.collection("clientesFidelidad").doc(clienteActualId).update({
                         visitas: 1,
-                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp(),
+                        ultimaVisita: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    visitasActuales = 1;
-                    diasRestantes = 90;
-                    visitaRegistradaEnEstaSesion = true; // Activamos el candado de la nueva sesión
-                    alert("¡Premio entregado con éxito! Se ha iniciado un nuevo ciclo con el mismo número de tarjeta.");
-                    dibujarTarjeta();
-
+                    visitaRegistradaEnEstaSesion = true; 
+                    alert("¡Premio entregado! Se inició un nuevo ciclo.");
+                    if(esAdmin) cargarClientesAusentes();
                 } catch (error) {
                     console.error("Bloqueado por Firebase:", error);
-                    alert("⚠️ Error de seguridad: El sistema bloqueó el canje del premio.");
+                    alert("⚠️ Error de seguridad.");
                     if(btn) { btn.disabled = false; btn.innerText = "🎁 Canjear y Reiniciar Tarjeta"; }
                 }
             }
         }
 
-        function regresarA() {
-            document.getElementById('tarjetaPuntos').style.display = 'none';
-            document.getElementById('vistaBusqueda').style.display = 'block';
-            document.getElementById('inputTelefono').value = ''; 
-            clienteActualId = null;
-        }
+        // LÓGICA CRM: FILTRAR Y CREAR ALERTAS DE RECOMPRA AUTOMÁTICAS
+        async function cargarClientesAusentes() {
+            const container = document.getElementById('listaAusentesContainer');
+            container.innerHTML = `<li style="color: #94a3b8; font-size: 12px; text-align: center; padding: 10px;">Analizando base de datos...</li>`;
+            
+            try {
+                const snapshot = await db.collection("clientesFidelidad").get();
+                container.innerHTML = '';
+                let contAusentes = 0;
 
-        async function verEstadisticas() {
-            const pin = prompt("🔐 Acceso Restringido. Ingresa el PIN de Gerente:");
-            if (pin === "1234") {
-                try {
-                    const fechaHoy = new Date();
-                    const primerDiaMes = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth(), 1);
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Usamos ultimaVisita o fechaInicioCiclo como respaldo si es un cliente antiguo
+                    const fechaUltima = data.ultimaVisita ? data.ultimaVisita.toDate() : (data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date());
+                    const hoy = new Date();
+                    const diasAusente = Math.floor((hoy - fechaUltima) / (1000 * 60 * 60 * 24));
 
-                    const snapshot = await db.collection("historialPremios")
-                        .where("fechaCanje", ">=", primerDiaMes)
-                        .get();
+                    // 🔥 FILTRO: Mostrar clientes con 15 o más días de ausencia
+                    if (diasAusente >= 15) {
+                        contAusentes++;
+                        const li = document.createElement('li');
+                        li.classList.add('item-ausente');
+                        
+                        // Mensaje personalizado para WhatsApp
+                        const mensajeWA = encodeURIComponent(`¡Hola! Tu auto ya debe extrañar el brillo de Gota Express 💧. Te recordamos que tienes acumulados ${data.visitas} de 6 pasos en tu tarjeta digital. ¡Te esperamos esta semana para consentir tu vehículo!`);
+                        const linkWhatsApp = `https://wa.me/52${data.telefono}?text=${mensajeWA}`;
 
-                    alert(`📊 ESTADÍSTICAS DEL MES\n\nSe han regalado un total de: ${snapshot.size} lavadas gratis en este mes.`);
-                } catch (error) {
-                    console.error(error);
-                    alert("Hubo un error al cargar las estadísticas.");
+                        li.innerHTML = `
+                            <div class="info-ausente">
+                                <span class="tel-ausente">📱 ${data.telefono}</span>
+                                <span class="dias-ausente">⚠️ Hace ${diasAusente} días no viene</span>
+                            </div>
+                            <a href="${linkWhatsApp}" target="_blank" class="btn-wa">💬 Recordar</a>
+                        `;
+                        container.appendChild(li);
+                    }
+                });
+
+                if (contAusentes === 0) {
+                    container.innerHTML = `<li style="color: #10b981; font-size: 12px; text-align: center; padding: 10px;">✅ ¡Excelente! Todos tus clientes están activos.</li>`;
                 }
-            } else if (pin !== null) {
-                alert("❌ PIN Incorrecto");
+
+            } catch (error) {
+                console.error("Error CRM:", error);
+                container.innerHTML = `<li style="color: #ef4444; font-size: 12px; text-align: center; padding: 10px;">Error al cargar las alertas.</li>`;
             }
         }
     </script>
