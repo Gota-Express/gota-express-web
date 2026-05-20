@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gota Express - Panel Admin</title>
+    <title>Gota Express - Panel Admin Integral</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
@@ -166,7 +166,7 @@
 
     <div class="contenedor">
         <h1 class="logo-empresa">💧 Gota Express</h1>
-        <p class="subtitulo">Panel de Administración</p>
+        <p class="subtitulo">Centro de Mando Integral</p>
 
         <div class="seccion-busqueda" id="vistaBusqueda">
             <input type="tel" id="inputTelefono" placeholder="Teléfono del cliente (10 dígitos)" maxlength="10">
@@ -177,6 +177,12 @@
             <button class="btn-secundario" onclick="cargarRecordatorios()">🔔 Recordatorios de Hoy (15 Días)</button>
             <button class="btn-secundario" onclick="cargarEstadisticas()">📊 Ver Dashboard de Negocio</button>
             
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+            <h3 style="font-size: 14px; color: #334155; margin-bottom: 10px; text-align: left;">Operación Diaria:</h3>
+
+            <button class="btn-secundario" style="background: #e0f2fe; color: #0284c7; border-color: #bae6fd;" onclick="agendarCita()">📅 Agendar Cita de Detallado</button>
+            <button class="btn-secundario" style="background: #fef9c3; color: #ca8a04; border-color: #fef08a; margin-bottom: 15px;" onclick="abrirInventario()">📋 Revisar Inventario en Keep</button>
+
             <div id="listaRecordatorios">
                 <h3 style="font-size: 14px; color: #334155; margin-bottom: 10px;">Clientes inactivos:</h3>
                 <div id="contenedorItems"></div>
@@ -437,7 +443,7 @@
             let telefonoDestino = telefonoEspecifico ? telefonoEspecifico : clienteActualId;
             let visitas = visitasEspecificas ? visitasEspecificas : visitasActuales;
             
-            const enlaceCliente = "[TU_ENLACE_DEL_CLIENTE_AQUI]"; // REEMPLAZA ESTO
+            const enlaceCliente = "[TU_ENLACE_DEL_CLIENTE_AQUI]"; // REEMPLAZA ESTO CON LA URL DE TUS CLIENTES
             
             if (tipo === 'visita') {
                 mensaje = `¡Hola! Gracias por tu visita a Gota Express 💧. Hemos registrado tu lavado, llevas ${visitas} de 6. ¡Recuerda que la séptima es gratis! Puedes ver tu tarjeta aquí: ${enlaceCliente}`;
@@ -452,7 +458,7 @@
         }
 
         async function cargarRecordatorios() {
-            document.getElementById('panelEstadisticas').style.display = 'none'; // Oculta estadísticas si están abiertas
+            document.getElementById('panelEstadisticas').style.display = 'none'; 
             const contenedor = document.getElementById('contenedorItems');
             contenedor.innerHTML = '<p style="font-size: 13px; color: #64748b;">Buscando clientes inactivos...</p>';
             document.getElementById('listaRecordatorios').style.display = 'block';
@@ -495,9 +501,8 @@
             }
         }
 
-        // NUEVA FUNCIÓN: DASHBOARD ESTADÍSTICAS
         async function cargarEstadisticas() {
-            document.getElementById('listaRecordatorios').style.display = 'none'; // Oculta recordatorios
+            document.getElementById('listaRecordatorios').style.display = 'none'; 
             document.getElementById('panelEstadisticas').style.display = 'block';
             
             document.getElementById('statClientes').innerText = '...';
@@ -524,7 +529,6 @@
 
                 const porcentajeRetorno = totalClientes > 0 ? Math.round((clientesFrecuentes / totalClientes) * 100) : 0;
 
-                // Actualizar interfaz
                 document.getElementById('statClientes').innerText = totalClientes;
                 document.getElementById('statFrecuentes').innerText = clientesFrecuentes;
                 document.getElementById('statPremios').innerText = totalPremios;
@@ -534,6 +538,22 @@
                 console.error("Error cargando estadísticas:", error);
                 alert("Error al cargar las estadísticas.");
             }
+        }
+
+        // NUEVAS FUNCIONES DE INTEGRACIÓN CON CALENDAR Y KEEP
+        function agendarCita() {
+            let titulo = "Cita de Detallado Automotriz";
+            if (clienteActualId) {
+                titulo += " - Tel: " + clienteActualId;
+            }
+            const detalles = "Servicio programado. Revisar inventario de insumos premium previo a la llegada del cliente.";
+            
+            const urlCalendar = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&details=${encodeURIComponent(detalles)}`;
+            window.open(urlCalendar, '_blank');
+        }
+
+        function abrirInventario() {
+            window.open('https://keep.google.com/', '_blank');
         }
     </script>
 </body>
