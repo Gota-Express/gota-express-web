@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gota Express - Club de Fidelidad</title>
+    <title>Gota Express - Panel Admin</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
@@ -127,4 +127,276 @@
         .btn-sumar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn-canjear { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; animation: pulsoAmarillo 1.2s infinite; }
 
-        .seccion-crm { display: none; margin-top: 25px; border-top:
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulsoVerde { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 12px rgba(16, 185, 129, 0.5); } 100% { transform: scale(1); } }
+        @keyframes pulsoAmarillo { 0% { transform: scale(1); } 50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1 class="logo-empresa">💧 Gota Express</h1>
+        <p class="subtitulo">Panel de Administración</p>
+
+        <div class="seccion-busqueda" id="vistaBusqueda">
+            <input type="tel" id="inputTelefono" placeholder="Teléfono del cliente (10 dígitos)" maxlength="10">
+            <button class="btn-principal" id="btnBuscar" onclick="buscarOAgregarCliente()">Buscar Tarjeta</button>
+        </div>
+
+        <div class="tarjeta-puntos" id="tarjetaPuntos">
+            <button style="background: none; border: none; color: #64748b; font-weight: bold; cursor: pointer; text-align: left; width: 100%; margin-bottom: 10px;" onclick="location.reload()">← Buscar otro cliente</button>
+            
+            <div class="header-tarjeta">
+                <div class="badge-frecuente">★ Cliente Frecuente ★</div>
+                <p class="numero-tarjeta" id="textoCliente"></p>
+            </div>
+            
+            <p class="mensaje-vigencia" id="textoVigencia"></p>
+            
+            <div class="cuadricula-sellos" id="gridSellos"></div>
+            
+            <div class="contenedor-progreso">
+                <div class="barra-progreso" id="barraProgreso"></div>
+            </div>
+            <div class="texto-contador" id="textoContador">0 de 6 pasos completados</div>
+            
+            <div id="zonaControles"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyABHFXP6-9kRHA_QvKGNlvFfREzOp8u9wU",
+            authDomain: "gota-express.firebaseapp.com",
+            projectId: "gota-express",
+            storageBucket: "gota-express.firebasestorage.app",
+            messagingSenderId: "610591122988",
+            appId: "1:610591122988:web:95d866ac9abc51a8291389",
+            measurementId: "G-H70GKB7Y6D"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let clienteActualId = null;
+        let visitasActuales = 0;
+        let diasRestantes = 90;
+        let visitaRegistradaEnEstaSesion = false; 
+        let listenerFirebase = null; 
+        const LIMITE_DIAS = 90;
+
+        // ESTO ASEGURA QUE SIEMPRE SEA EL PANEL DE ADMINISTRADOR
+        const esAdmin = true;
+
+        const logoGotaExpressSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#0072ff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
+        const logoPremioSVG = `<svg class="sello-logo" viewBox="0 0 24 24" fill="#f59e0b" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+
+        function lanzarConfeti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        async function buscarOAgregarCliente() {
+            const telefono = document.getElementById('inputTelefono').value.trim();
+            if (telefono.length < 10) { alert("Ingresa un número de 10 dígitos."); return; }
+
+            document.getElementById('btnBuscar').disabled = true;
+            document.getElementById('btnBuscar').innerText = "Buscando...";
+
+            clienteActualId = telefono;
+            visitaRegistradaEnEstaSesion = false; 
+            
+            try {
+                const docRef = db.collection("clientesFidelidad").doc(telefono);
+                
+                if (listenerFirebase) { listenerFirebase(); }
+
+                const docInicial = await docRef.get();
+                if (!docInicial.exists) {
+                    await docRef.set({ telefono: telefono, visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                    alert("¡Nuevo Cliente! Tarjeta creada con éxito. 1ra estampa gratis otorgada.");
+                    visitaRegistradaEnEstaSesion = true; 
+                }
+
+                listenerFirebase = docRef.onSnapshot(async (doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const fechaInicio = data.fechaInicioCiclo ? data.fechaInicioCiclo.toDate() : new Date();
+                        const hoy = new Date();
+                        const diasTranscurridos = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
+                        
+                        diasRestantes = LIMITE_DIAS - diasTranscurridos;
+                        let visitasAnteriores = visitasActuales;
+
+                        if (diasRestantes < 0 && data.visitas < 7) {
+                            alert("⚠️ Han pasado más de 3 meses. La tarjeta se reiniciará para un nuevo ciclo.");
+                            await docRef.update({ visitas: 1, fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp() });
+                            visitasActuales = 1;
+                            diasRestantes = 90;
+                        } else {
+                            visitasActuales = data.visitas;
+                        }
+
+                        if (visitasAnteriores > 0 && visitasAnteriores < 7 && visitasActuales === 7) {
+                            lanzarConfeti();
+                        } else if (visitasActuales === 7 && visitasAnteriores === 0) {
+                            lanzarConfeti();
+                        }
+
+                        document.getElementById('vistaBusqueda').style.display = 'none';
+                        dibujarTarjeta();
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al conectar con la base de datos.");
+            } finally {
+                document.getElementById('btnBuscar').disabled = false;
+                document.getElementById('btnBuscar').innerText = "Buscar Tarjeta";
+            }
+        }
+
+        function dibujarTarjeta() {
+            document.getElementById('textoCliente').innerText = `Tarjeta No. ${clienteActualId}`;
+            const textoVigencia = document.getElementById('textoVigencia');
+            
+            if(visitasActuales < 7) {
+                textoVigencia.innerText = `⏳ Caduca en: ${diasRestantes} días`;
+                textoVigencia.style.color = diasRestantes <= 15 ? "#ef4444" : "#f59e0b";
+            } else {
+                textoVigencia.innerText = "¡PREMIO DESBLOQUEADO!";
+                textoVigencia.style.color = "#10b981";
+            }
+
+            const lavadasCompletadas = Math.min(visitasActuales, 7);
+            const porcentajeBarra = ((Math.min(lavadasCompletadas, 6)) / 6) * 100;
+            document.getElementById('barraProgreso').style.width = porcentajeBarra + '%';
+            
+            if(visitasActuales >= 7) {
+                document.getElementById('textoContador').innerText = `¡Listo para reclamar tu 7ma lavada gratis!`;
+            } else {
+                document.getElementById('textoContador').innerText = `${visitasActuales} de 6 lavados registrados`;
+            }
+
+            const grid = document.getElementById('gridSellos');
+            const zonaControles = document.getElementById('zonaControles');
+            
+            grid.innerHTML = ''; 
+            zonaControles.innerHTML = '';
+
+            for (let i = 1; i <= 7; i++) {
+                const div = document.createElement('div');
+                div.classList.add('sello-item');
+                if (i === 7) div.classList.add('premio');
+                if (i <= visitasActuales) div.classList.add('activo');
+
+                if (i === 7) {
+                    div.innerHTML = logoPremioSVG + `<span class="sello-numero">${visitasActuales === 7 ? '¡GRATIS!' : '7ma Gratis'}</span>`;
+                } else {
+                    div.innerHTML = logoGotaExpressSVG + `<span class="sello-numero">${i === 1 ? 'Bienvenida' : 'Lavada ' + i}</span>`;
+                }
+                grid.appendChild(div);
+            }
+
+            // AQUI SE AGREGAN LOS BOTONES CON WHATSAPP
+            if (visitasActuales >= 7) {
+                zonaControles.innerHTML = `
+                    <button class="btn-accion btn-canjear" id="btnCanjear" onclick="canjearPremio()" style="margin-bottom: 10px;">🎁 Canjear y Reiniciar Tarjeta</button>
+                    <button class="btn-accion" style="background: #25D366; color: white;" onclick="enviarWhatsApp('premio')">💬 Avisar Premio por WhatsApp</button>
+                `;
+            } else if (!visitaRegistradaEnEstaSesion) {
+                zonaControles.innerHTML = `
+                    <button class="btn-accion btn-sumar" id="btnSumar" onclick="sumarVisita()" style="margin-bottom: 10px;">＋ Registrar Nueva Visita</button>
+                    <button class="btn-accion" style="background: #25D366; color: white;" onclick="enviarWhatsApp('recordatorio')">💬 Enviar Recordatorio (Manual)</button>
+                `;
+            } else {
+                zonaControles.innerHTML = `
+                    <p style="color: #10b981; font-weight: bold; margin-bottom: 10px;">✅ Visita registrada con éxito</p>
+                    <button class="btn-accion" style="background: #25D366; color: white;" onclick="enviarWhatsApp('visita')">💬 Enviar Ticket por WhatsApp</button>
+                `;
+            }
+
+            document.getElementById('tarjetaPuntos').style.display = 'block';
+        }
+
+        async function sumarVisita() {
+            if (visitasActuales < 7 && !visitaRegistradaEnEstaSesion) {
+                const btn = document.getElementById('btnSumar');
+                if(btn) { btn.disabled = true; btn.innerText = "⏳ Registrando..."; }
+
+                try {
+                    await db.collection("clientesFidelidad").doc(clienteActualId).update({ 
+                        visitas: visitasActuales + 1 
+                    });
+                    
+                    visitaRegistradaEnEstaSesion = true; 
+                } catch (error) {
+                    console.error("Operación bloqueada por Firebase:", error);
+                    alert("⚠️ Acción bloqueada por seguridad.");
+                    if(btn) { btn.disabled = false; btn.innerText = "＋ Registrar Nueva Visita"; }
+                }
+            }
+        }
+
+        async function canjearPremio() {
+            if(confirm("¿Seguro que deseas canjear el premio? La tarjeta volverá a la lavada #1.")){
+                const btn = document.getElementById('btnCanjear');
+                if(btn) { btn.disabled = true; btn.innerText = "Canjeando..."; }
+
+                try {
+                    await db.collection("historialPremios").add({
+                        telefono: clienteActualId,
+                        fechaCanje: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection("clientesFidelidad").doc(clienteActualId).update({
+                        visitas: 1,
+                        fechaInicioCiclo: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    visitaRegistradaEnEstaSesion = true; 
+                    alert("¡Premio entregado! Se inició un nuevo ciclo.");
+
+                } catch (error) {
+                    console.error("Bloqueado por Firebase:", error);
+                    alert("⚠️ Error de seguridad.");
+                    if(btn) { btn.disabled = false; btn.innerText = "🎁 Canjear y Reiniciar Tarjeta"; }
+                }
+            }
+        }
+
+        // FUNCIÓN PARA ENVIAR WHATSAPP
+        function enviarWhatsApp(tipo) {
+            let mensaje = "";
+            const enlaceCliente = "[TU_ENLACE_DEL_CLIENTE_AQUI]"; // REEMPLAZA ESTO CON LA URL DE TU OTRO REPOSITORIO
+            
+            if (tipo === 'visita') {
+                mensaje = `¡Hola! Gracias por tu visita a Gota Express 💧. Hemos registrado tu lavado, llevas ${visitasActuales} de 6. ¡Recuerda que la séptima es gratis! Puedes ver tu tarjeta aquí: ${enlaceCliente}`;
+            } else if (tipo === 'premio') {
+                mensaje = `¡Felicidades! 🎁 Has completado tus 6 lavadas en Gota Express. Tu siguiente lavado es totalmente GRATIS. ¡Te esperamos!`;
+            } else if (tipo === 'recordatorio') {
+                mensaje = `¡Hola! 💧 Ya extrañamos a tu auto en Gota Express. Te recordamos que tienes ${visitasActuales} visitas acumuladas. ¡Ven a visitarnos y acércate a tu lavada gratis!`;
+            }
+
+            // Ya incluye el código +52 para México
+            const url = `https://wa.me/52${clienteActualId}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
